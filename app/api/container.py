@@ -7,6 +7,8 @@ pick it up.
 
 from dataclasses import dataclass, field
 
+from app.application.booking_service import BookingService
+from app.application.inventory_allocator import InventoryAllocator
 from app.application.onboarding_service import OnboardingService
 from app.application.search_service import SearchService
 from app.infrastructure.clock import SystemClock
@@ -41,7 +43,13 @@ class Container:
 
     onboarding: OnboardingService = field(init=False)
     search: SearchService = field(init=False)
+    allocator: InventoryAllocator = field(init=False)
+    booking: BookingService = field(init=False)
 
     def __post_init__(self) -> None:
         self.onboarding = OnboardingService(self.owners, self.properties, self.inventory)
         self.search = SearchService(self.properties, self.inventory, self.pricing, self.clock)
+        self.allocator = InventoryAllocator(self.inventory, self.locks)
+        self.booking = BookingService(
+            self.properties, self.bookings, self.allocator, self.pricing, self.clock
+        )

@@ -59,8 +59,7 @@ class SearchService:
     def search(
         self, criteria: SearchCriteria, filters: Sequence[SearchFilter] = ()
     ) -> list[PropertySearchResult]:
-        if criteria.stay.starts_before(self.clock.today()):
-            raise DomainValidationError("check_in cannot be in the past")
+        criteria.stay.require_not_in_past(self.clock.today())
 
         results = []
         for prop in self.properties.find_by_location(criteria.city, criteria.locality):

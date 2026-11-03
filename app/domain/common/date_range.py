@@ -39,3 +39,7 @@ class DateRange:
 
     def starts_before(self, day: date) -> bool:
         return self.check_in < day
+
+    def require_not_in_past(self, today: date) -> None:
+        if self.starts_before(today):
+            raise DomainValidationError("check_in cannot be in the past")

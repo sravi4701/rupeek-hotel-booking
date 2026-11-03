@@ -3,6 +3,7 @@ from typing import Annotated, cast
 from fastapi import Depends, Request
 
 from app.api.container import Container
+from app.application.booking_service import BookingService
 from app.application.onboarding_service import OnboardingService
 from app.application.search_service import SearchService
 
@@ -26,3 +27,10 @@ def get_search_service(container: ContainerDep) -> SearchService:
 
 
 SearchServiceDep = Annotated[SearchService, Depends(get_search_service)]
+
+
+def get_booking_service(container: ContainerDep) -> BookingService:
+    return container.booking
+
+
+BookingServiceDep = Annotated[BookingService, Depends(get_booking_service)]
