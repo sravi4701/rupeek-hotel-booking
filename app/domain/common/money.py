@@ -39,6 +39,11 @@ class Money:
 
     __rmul__ = __mul__
 
+    def __truediv__(self, divisor: int) -> Money:
+        if divisor <= 0:
+            raise DomainValidationError("Can only divide money by a positive number")
+        return Money(self.amount / Decimal(divisor), self.currency)
+
     def percent(self, pct: int | Decimal) -> Money:
         return Money(self.amount * Decimal(pct) / Decimal(100), self.currency)
 
