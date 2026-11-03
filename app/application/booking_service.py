@@ -52,7 +52,8 @@ class BookingService:
         return self.bookings.get(booking_id)
 
     def _build_booking(self, request: BookingRequest) -> Booking:
-        room_type = self.properties.get(request.property_id).room_type(request.room_type_id)
+        prop = self.properties.get(request.property_id)
+        room_type = prop.room_type(request.room_type_id)
         request.stay.require_not_in_past(self.clock.today())
         if not room_type.can_host(request.guests, request.rooms):
             raise DomainValidationError(
@@ -67,5 +68,6 @@ class BookingService:
             guests=request.guests,
             rooms=request.rooms,
             total_price=quote.total,
+            cancellation_policy=prop.cancellation_policy,
             created_at=self.clock.now(),
         )

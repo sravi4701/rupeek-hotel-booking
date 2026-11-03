@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, time
 
 from app.domain.booking.status import BookingStatus, can_transition
 from app.domain.common.date_range import DateRange
 from app.domain.common.exceptions import DomainValidationError, InvalidStateTransitionError
 from app.domain.common.ids import new_id
 from app.domain.common.money import Money
+
+# Assumed standard check-in time. Cancellation windows are measured up to this moment.
+CHECK_IN_TIME = time(14, 0)
 
 
 @dataclass(slots=True)
@@ -16,6 +19,9 @@ class Booking:
 
     Inventory is held when the booking is created. State changes only go through
     the methods below, so ``ALLOWED_TRANSITIONS`` is always enforced.
+
+    ``cancellation_policy`` is copied from the property at booking time, so a
+    later policy change on the property never affects existing bookings.
     """
 
     property_id: str
@@ -25,6 +31,7 @@ class Booking:
     guests: int
     rooms: int
     total_price: Money
+    cancellation_policy: str
     created_at: datetime
     status: BookingStatus = BookingStatus.PENDING_PAYMENT
     payment_id: str | None = None
@@ -56,7 +63,19 @@ class Booking:
         self.require_awaiting_payment()
         self.failed_payment_attempts += 1
 
+    @property
+    def check_in_at(self) -> datetime:
+        return datetime.combine(self.stay.check_in, CHECK_IN_TIME)
+
+    def require_cancellable(self, at: datetime) -> None:
+        """Guard to call before refunding: the booking can still move to CANCELLED at ``at``."""
+        if not can_transition(self.status, BookingStatus.CANCELLED):
+            raise InvalidStateTransitionError("Booking", self.status, BookingStatus.CANCELLED)
+        if at >= self.check_in_at:
+            raise DomainValidationError("A booking cannot be cancelled after check-in time")
+
     def cancel(self, refund_amount: Money, at: datetime) -> None:
+        self.require_cancellable(at)
         if refund_amount.amount > 0 and self.status is not BookingStatus.CONFIRMED:
             raise DomainValidationError("Only a paid (confirmed) booking can be refunded")
         if self.total_price < refund_amount:

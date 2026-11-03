@@ -43,6 +43,8 @@ class PaymentOut(BaseModel):
     status: PaymentStatus
     gateway_reference: str | None
     failure_reason: str | None
+    refunded_amount: Decimal | None
+    refund_reference: str | None
     created_at: datetime
 
     @classmethod
@@ -57,6 +59,8 @@ class PaymentOut(BaseModel):
             status=payment.status,
             gateway_reference=payment.gateway_reference,
             failure_reason=payment.failure_reason,
+            refunded_amount=payment.refunded_amount.amount if payment.refunded_amount else None,
+            refund_reference=payment.refund_reference,
             created_at=payment.created_at,
         )
 

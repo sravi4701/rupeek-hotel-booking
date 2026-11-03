@@ -15,6 +15,7 @@ from app.infrastructure.persistence.in_memory.repositories import (
     InMemoryOwnerRepository,
     InMemoryPropertyRepository,
 )
+from app.strategies.cancellation.registry import default_cancellation_policies
 
 
 def _details(name: str = "Sunrise", **overrides: object) -> PropertyDetails:
@@ -40,7 +41,12 @@ def inventory() -> InMemoryInventoryRepository:
 
 @pytest.fixture
 def service(inventory: InMemoryInventoryRepository) -> OnboardingService:
-    return OnboardingService(InMemoryOwnerRepository(), InMemoryPropertyRepository(), inventory)
+    return OnboardingService(
+        InMemoryOwnerRepository(),
+        InMemoryPropertyRepository(),
+        inventory,
+        default_cancellation_policies(),
+    )
 
 
 def test_standalone_property_is_an_owner_with_one_property(service: OnboardingService) -> None:
@@ -86,6 +92,13 @@ def test_invalid_property_is_not_persisted(service: OnboardingService) -> None:
 
     assert service.list_properties(owner.id) == []
     assert service.get_owner(owner.id).property_ids == []
+
+
+def test_rejects_unknown_cancellation_policy(service: OnboardingService) -> None:
+    owner = service.register_owner("Solo Inn", AccountType.INDIVIDUAL)
+
+    with pytest.raises(DomainValidationError, match="Unknown cancellation policy"):
+        service.onboard_property(owner.id, _details(cancellation_policy="lenient"))
 
 
 def test_listing_properties_of_unknown_owner_is_not_found(service: OnboardingService) -> None:

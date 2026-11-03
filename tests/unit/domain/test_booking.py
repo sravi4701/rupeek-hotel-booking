@@ -20,6 +20,7 @@ def _booking(**overrides: object) -> Booking:
         "guests": 2,
         "rooms": 1,
         "total_price": Money.of(6000),
+        "cancellation_policy": "flexible",
         "created_at": NOW,
     }
     kwargs.update(overrides)
@@ -88,6 +89,15 @@ class TestLifecycle:
     def test_unpaid_booking_cannot_be_refunded(self) -> None:
         with pytest.raises(DomainValidationError):
             _booking().cancel(Money.of(1), at=NOW)
+
+    def test_cannot_cancel_at_or_after_check_in_time(self) -> None:
+        booking = _confirmed()
+
+        with pytest.raises(DomainValidationError):
+            booking.cancel(Money.zero(), at=booking.check_in_at)
+
+    def test_check_in_at_uses_standard_check_in_time(self) -> None:
+        assert _booking().check_in_at == datetime(2027, 2, 1, 14, 0)
 
     def test_refund_cannot_exceed_total(self) -> None:
         with pytest.raises(DomainValidationError):

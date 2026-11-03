@@ -120,9 +120,9 @@ class PaymentService:
             created_at=self.clock.now(),
         )
         self.payments.save(payment)
-        if payment.succeeded:
-            booking.confirm(payment.id)
-        else:
+        if payment.declined:
             booking.record_failed_payment()
+        else:
+            booking.confirm(payment.id)
         self.bookings.save(booking)
         return PaymentOutcome(payment=payment, booking=booking)

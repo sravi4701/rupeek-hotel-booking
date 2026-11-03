@@ -29,3 +29,7 @@ class InvalidStateTransitionError(DomainError):
 
 class IdempotencyConflictError(DomainError):
     """An idempotency key was reused for a different request."""
+
+
+class RefundFailedError(DomainError):
+    """The payment gateway rejected a refund. The booking is left unchanged."""

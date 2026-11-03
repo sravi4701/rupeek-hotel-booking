@@ -51,6 +51,7 @@ class BookingOut(BaseModel):
     rooms: int
     total_price: Decimal
     currency: str
+    cancellation_policy: str
     payment_id: str | None
     failed_payment_attempts: int
     refund_amount: Decimal | None
@@ -72,6 +73,7 @@ class BookingOut(BaseModel):
             rooms=booking.rooms,
             total_price=booking.total_price.amount,
             currency=booking.total_price.currency,
+            cancellation_policy=booking.cancellation_policy,
             payment_id=booking.payment_id,
             failed_payment_attempts=booking.failed_payment_attempts,
             refund_amount=booking.refund_amount.amount if booking.refund_amount else None,

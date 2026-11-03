@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from app.api.dependencies import BookingServiceDep
+from app.api.dependencies import BookingServiceDep, CancellationServiceDep
 from app.api.schemas.booking import BookingCreate, BookingOut
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -19,3 +19,16 @@ def create_booking(body: BookingCreate, service: BookingServiceDep) -> BookingOu
 @router.get("/{booking_id}")
 def get_booking(booking_id: str, service: BookingServiceDep) -> BookingOut:
     return BookingOut.from_domain(service.get(booking_id))
+
+
+@router.post(
+    "/{booking_id}/cancel",
+    responses={
+        409: {"description": "Booking already cancelled"},
+        422: {"description": "Check-in time has passed"},
+        502: {"description": "Gateway rejected the refund; booking unchanged"},
+    },
+)
+def cancel_booking(booking_id: str, service: CancellationServiceDep) -> BookingOut:
+    """Cancel the booking, refund it under its policy, and free its rooms for others."""
+    return BookingOut.from_domain(service.cancel(booking_id))

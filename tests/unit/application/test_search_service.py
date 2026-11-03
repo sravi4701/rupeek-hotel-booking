@@ -22,6 +22,7 @@ from app.infrastructure.persistence.in_memory.repositories import (
     InMemoryPropertyRepository,
 )
 from app.ports.search_filter import SearchFilter
+from app.strategies.cancellation.registry import default_cancellation_policies
 from app.strategies.filters.amenities import AmenitiesFilter
 from app.strategies.filters.price_range import PriceRangeFilter
 from app.strategies.pricing.standard import StandardPricing
@@ -34,7 +35,9 @@ class Fixture:
     def __init__(self) -> None:
         self.inventory = InMemoryInventoryRepository()
         properties = InMemoryPropertyRepository()
-        self.onboarding = OnboardingService(InMemoryOwnerRepository(), properties, self.inventory)
+        self.onboarding = OnboardingService(
+            InMemoryOwnerRepository(), properties, self.inventory, default_cancellation_policies()
+        )
         self.search = SearchService(
             properties, self.inventory, StandardPricing(), FixedClock(datetime(2027, 1, 10))
         )

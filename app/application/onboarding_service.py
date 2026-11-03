@@ -12,6 +12,7 @@ from app.domain.property.owner import AccountType, OwnerAccount
 from app.domain.property.property import Property
 from app.domain.property.room_type import RoomType
 from app.ports.repositories import InventoryRepository, OwnerRepository, PropertyRepository
+from app.strategies.cancellation.registry import CancellationPolicyRegistry
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +47,7 @@ class OnboardingService:
     owners: OwnerRepository
     properties: PropertyRepository
     inventory: InventoryRepository
+    policies: CancellationPolicyRegistry
 
     def register_owner(self, name: str, account_type: AccountType) -> OwnerAccount:
         owner = OwnerAccount(name=name, account_type=account_type)
@@ -57,6 +59,7 @@ class OnboardingService:
 
     def onboard_property(self, owner_id: str, details: PropertyDetails) -> Property:
         owner = self.owners.get(owner_id)
+        self.policies.get(details.cancellation_policy)  # reject unknown policy names up front
         prop = self._build_property(owner_id, details)
 
         self.properties.save(prop)

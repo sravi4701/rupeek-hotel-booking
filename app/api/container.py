@@ -8,6 +8,7 @@ pick it up.
 from dataclasses import dataclass, field
 
 from app.application.booking_service import BookingService
+from app.application.cancellation_service import CancellationService
 from app.application.inventory_allocator import InventoryAllocator
 from app.application.onboarding_service import OnboardingService
 from app.application.payment_service import PaymentService
@@ -35,6 +36,10 @@ from app.ports.repositories import (
     PaymentRepository,
     PropertyRepository,
 )
+from app.strategies.cancellation.registry import (
+    CancellationPolicyRegistry,
+    default_cancellation_policies,
+)
 from app.strategies.payments.registry import PaymentMethodRegistry, default_payment_methods
 from app.strategies.pricing.standard import StandardPricing
 
@@ -52,15 +57,21 @@ class Container:
     idempotency: IdempotencyStore = field(default_factory=InMemoryIdempotencyStore)
     gateway: PaymentGateway = field(default_factory=MockPaymentGateway)
     payment_methods: PaymentMethodRegistry = field(default_factory=default_payment_methods)
+    cancellation_policies: CancellationPolicyRegistry = field(
+        default_factory=default_cancellation_policies
+    )
 
     onboarding: OnboardingService = field(init=False)
     search: SearchService = field(init=False)
     allocator: InventoryAllocator = field(init=False)
     booking: BookingService = field(init=False)
     payment: PaymentService = field(init=False)
+    cancellation: CancellationService = field(init=False)
 
     def __post_init__(self) -> None:
-        self.onboarding = OnboardingService(self.owners, self.properties, self.inventory)
+        self.onboarding = OnboardingService(
+            self.owners, self.properties, self.inventory, self.cancellation_policies
+        )
         self.search = SearchService(self.properties, self.inventory, self.pricing, self.clock)
         self.allocator = InventoryAllocator(self.inventory, self.locks)
         self.booking = BookingService(
@@ -72,6 +83,15 @@ class Container:
             self.idempotency,
             self.payment_methods,
             self.gateway,
+            self.locks,
+            self.clock,
+        )
+        self.cancellation = CancellationService(
+            self.bookings,
+            self.payments,
+            self.cancellation_policies,
+            self.gateway,
+            self.allocator,
             self.locks,
             self.clock,
         )

@@ -29,7 +29,7 @@ def pay_for_booking(
     original result and is never charged twice.
     """
     outcome = service.pay(body.to_request(booking_id, idempotency_key))
-    if not outcome.payment.succeeded:
+    if outcome.payment.declined:
         response.status_code = status.HTTP_402_PAYMENT_REQUIRED
     if outcome.replayed:
         response.headers["Idempotent-Replayed"] = "true"

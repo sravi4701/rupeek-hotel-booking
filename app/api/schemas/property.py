@@ -63,7 +63,9 @@ class PropertyCreate(BaseModel):
     address: str = ""
     star_rating: int = Field(ge=1, le=5, examples=[4])
     amenities: set[Amenity] = Field(default_factory=set)
-    cancellation_policy: str = "flexible"
+    cancellation_policy: str = Field(
+        default="flexible", description="One of: flexible, moderate, non_refundable"
+    )
     room_types: list[RoomTypeIn] = Field(min_length=1)
 
     def to_details(self) -> PropertyDetails:

@@ -10,6 +10,7 @@ from app.domain.common.exceptions import (
     InsufficientInventoryError,
     InvalidStateTransitionError,
     NotFoundError,
+    RefundFailedError,
 )
 
 # The most specific class in an exception's MRO wins. Later phases add entries here.
@@ -19,6 +20,7 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     InsufficientInventoryError: status.HTTP_409_CONFLICT,
     InvalidStateTransitionError: status.HTTP_409_CONFLICT,
     IdempotencyConflictError: status.HTTP_409_CONFLICT,
+    RefundFailedError: status.HTTP_502_BAD_GATEWAY,
     DomainError: status.HTTP_400_BAD_REQUEST,
 }
 
