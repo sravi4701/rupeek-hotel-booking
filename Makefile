@@ -1,10 +1,13 @@
-.PHONY: install run test lint format
+.PHONY: install run run-weekend test lint format
 
 install:
 	uv sync
 
 run:
-	uv run uvicorn app.main:app --reload
+	SEED_DEMO_DATA=true uv run uvicorn app.main:app --reload
+
+run-weekend:
+	SEED_DEMO_DATA=true PRICING_STRATEGY=weekend uv run uvicorn app.main:app --reload
 
 test:
 	uv run pytest
