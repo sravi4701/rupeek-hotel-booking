@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.domain.common.exceptions import (
     DomainError,
     DomainValidationError,
+    IdempotencyConflictError,
     InsufficientInventoryError,
     InvalidStateTransitionError,
     NotFoundError,
@@ -17,6 +18,7 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     NotFoundError: status.HTTP_404_NOT_FOUND,
     InsufficientInventoryError: status.HTTP_409_CONFLICT,
     InvalidStateTransitionError: status.HTTP_409_CONFLICT,
+    IdempotencyConflictError: status.HTTP_409_CONFLICT,
     DomainError: status.HTTP_400_BAD_REQUEST,
 }
 

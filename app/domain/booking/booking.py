@@ -47,9 +47,13 @@ class Booking:
         self._transition_to(BookingStatus.CONFIRMED)
         self.payment_id = payment_id
 
+    def require_awaiting_payment(self) -> None:
+        """Guard to call before charging, so a confirmed or cancelled booking is never charged."""
+        self._require_status(BookingStatus.PENDING_PAYMENT, target="payment attempt")
+
     def record_failed_payment(self) -> None:
         """A failed attempt leaves the booking pending so the guest can retry."""
-        self._require_status(BookingStatus.PENDING_PAYMENT, target="payment attempt")
+        self.require_awaiting_payment()
         self.failed_payment_attempts += 1
 
     def cancel(self, refund_amount: Money, at: datetime) -> None:

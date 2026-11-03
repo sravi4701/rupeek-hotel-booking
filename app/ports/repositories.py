@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from app.domain.booking.booking import Booking
 from app.domain.common.exceptions import NotFoundError
 from app.domain.inventory.room_inventory import RoomInventory
+from app.domain.payment.payment import Payment
 from app.domain.property.owner import OwnerAccount
 from app.domain.property.property import Property
 
@@ -66,3 +68,29 @@ class InventoryRepository(ABC):
         if inventory is None:
             raise NotFoundError("Inventory", f"{property_id}/{room_type_id}")
         return inventory
+
+
+class PaymentRepository(Repository[Payment], ABC):
+    entity_name = "Payment"
+
+    @abstractmethod
+    def list_by_booking(self, booking_id: str) -> Sequence[Payment]: ...
+
+
+@dataclass(frozen=True, slots=True)
+class IdempotencyRecord:
+    request_fingerprint: str
+    payment_id: str
+
+
+class IdempotencyStore(ABC):
+    """Maps a client idempotency key to the result of the first request that used it.
+
+    A production store would expire keys after a while (e.g. 24h).
+    """
+
+    @abstractmethod
+    def find(self, key: str) -> IdempotencyRecord | None: ...
+
+    @abstractmethod
+    def save(self, key: str, record: IdempotencyRecord) -> None: ...

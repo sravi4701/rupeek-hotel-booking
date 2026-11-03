@@ -25,3 +25,7 @@ class InvalidStateTransitionError(DomainError):
         super().__init__(f"{entity} cannot move from {current} to {target}")
         self.current = current
         self.target = target
+
+
+class IdempotencyConflictError(DomainError):
+    """An idempotency key was reused for a different request."""

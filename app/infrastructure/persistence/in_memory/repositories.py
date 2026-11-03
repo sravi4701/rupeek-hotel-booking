@@ -2,13 +2,17 @@ from collections.abc import Sequence
 
 from app.domain.booking.booking import Booking
 from app.domain.inventory.room_inventory import RoomInventory
+from app.domain.payment.payment import Payment
 from app.domain.property.owner import OwnerAccount
 from app.domain.property.property import Property
 from app.infrastructure.persistence.in_memory.base import InMemoryStore
 from app.ports.repositories import (
     BookingRepository,
+    IdempotencyRecord,
+    IdempotencyStore,
     InventoryRepository,
     OwnerRepository,
+    PaymentRepository,
     PropertyRepository,
 )
 
@@ -61,3 +65,29 @@ class InMemoryInventoryRepository(InventoryRepository):
 
     def find(self, property_id: str, room_type_id: str) -> RoomInventory | None:
         return self._store.get((property_id, room_type_id))
+
+
+class InMemoryPaymentRepository(PaymentRepository):
+    def __init__(self) -> None:
+        self._store: InMemoryStore[str, Payment] = InMemoryStore()
+
+    def save(self, entity: Payment) -> None:
+        self._store.put(entity.id, entity)
+
+    def find(self, entity_id: str) -> Payment | None:
+        return self._store.get(entity_id)
+
+    def list_by_booking(self, booking_id: str) -> Sequence[Payment]:
+        payments = self._store.filter(lambda payment: payment.booking_id == booking_id)
+        return sorted(payments, key=lambda payment: payment.created_at)
+
+
+class InMemoryIdempotencyStore(IdempotencyStore):
+    def __init__(self) -> None:
+        self._store: InMemoryStore[str, IdempotencyRecord] = InMemoryStore()
+
+    def find(self, key: str) -> IdempotencyRecord | None:
+        return self._store.get(key)
+
+    def save(self, key: str, record: IdempotencyRecord) -> None:
+        self._store.put(key, record)

@@ -5,6 +5,7 @@ from fastapi import Depends, Request
 from app.api.container import Container
 from app.application.booking_service import BookingService
 from app.application.onboarding_service import OnboardingService
+from app.application.payment_service import PaymentService
 from app.application.search_service import SearchService
 
 
@@ -34,3 +35,10 @@ def get_booking_service(container: ContainerDep) -> BookingService:
 
 
 BookingServiceDep = Annotated[BookingService, Depends(get_booking_service)]
+
+
+def get_payment_service(container: ContainerDep) -> PaymentService:
+    return container.payment
+
+
+PaymentServiceDep = Annotated[PaymentService, Depends(get_payment_service)]
